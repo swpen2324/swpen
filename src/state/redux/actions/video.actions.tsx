@@ -1,7 +1,6 @@
 import {
   ClearStatusAction,
   FrameLoadingStatus,
-  HideControlAction,
   HideTimeAction,
   SetFrameLoadingStatusAction,
   ShowTimeAction,
