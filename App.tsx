@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -9,6 +10,9 @@ import {
 } from 'react-native';
 import { Camera, CameraPermissionStatus, useCameraDevice, useCameraFormat, useCameraPermission } from 'react-native-vision-camera';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
+import { OrientationLocker, PORTRAIT, LANDSCAPE } from "react-native-orientation-locker";
+import { Dimensions } from 'react-native';
+// import Video from 'react-native-video-processing';
 
 const App = () => {
   const { hasPermission, requestPermission } = useCameraPermission()
@@ -34,25 +38,34 @@ const App = () => {
   async function startRecording() {
     if (camera.current) {
       try {
+        console.log('>> isLandscapeRight:', isLandscapeRight);
         camera.current.startRecording({
           onRecordingError: (error) => console.error(error),
           videoBitRate: 'high',
           onRecordingFinished: async (video) => {
             const path = video.path;
-            setVideoPath(video.path);
+            // Rotate the video 90 degrees anti-clockwise
+            // const rotatedVideoPath = await Video.rotate(path, '90', {
+            //   save: {
+            //     compressFormat: 'mp4',
+            //     quality: '1.0',
+            //   },
+            // });
+            // setVideoPath(rotatedVideoPath);
+            
             try {
               // Save the recorded video to the camera roll
               await CameraRoll.save(`file://${path}`, {
                 type: 'video',
               })
-              console.log('Video saved to camera roll');
+              console.log('>>Video saved to camera roll');
             } catch (error) {
-              console.error('Error saving video to camera roll:', error);
+              console.error('>>Error saving video to camera roll:', error);
             }
           },
         });
       } catch (error) {
-        console.error("Error recording video", error);
+        console.error(">>Error recording video", error);
       }
     }
   }
@@ -64,7 +77,7 @@ const App = () => {
         camera.current.stopRecording();
       }
     } catch (error) {
-      console.error("Error stopping video", error);
+      console.error(">>Error stopping video", error);
     }
   }
 
@@ -72,29 +85,56 @@ const App = () => {
     if (camera.current) {
       try {
         const file = await camera.current.takePhoto();
-        const result = await fetch(`file://${file.path}`)
-        const data = await result.blob();
         console.log("photo", file);
         await CameraRoll.save(`file://${file.path}`, {
           type: 'photo',
         })
       } catch (error) {
-        console.error("Error recording video", error);
+        console.error(">>Error taking picture", error);
       }
     }
   }
 
+  const window = Dimensions.get('window');
+  const isLandscapeRight = window.width > window.height;
+  const layout = {
+    width: window.width,  // You can adjust this based on your requirements
+    height: window.height, // You can adjust this based on your requirements
+  };
+  
+
+
   return (
     <View style={styles.container}>
-      <Camera
-        ref={camera}
-        style={StyleSheet.absoluteFill}
-        device={device}
-        format={format}
-        isActive={true}
-        video={true}
-        photo={true}
+      <OrientationLocker
+        orientation={LANDSCAPE}
+        onChange={orientation => console.log('onChange', orientation)}
+        onDeviceChange={orientation => console.log('onDeviceChange', orientation)}
       />
+      <View
+        style={{
+          transform: [
+            isLandscapeRight ? { rotate: "-90deg" } : { rotate: "90deg" },
+          ],
+          width: layout.height,
+          height: layout.width,
+          position: "absolute",
+          left: layout.width / 2 - layout.height / 2,
+          top: layout.height / 2 - layout.width / 2,
+        }}
+      >
+        <Camera
+          ref={camera}
+          style={StyleSheet.absoluteFill}
+          device={device}
+          format={format}
+          isActive={true}
+          video={true}
+          photo={true}
+        />
+      </View>
+      
+      {/* buttons */}
       <View style={styles.buttonContainer}>
         {/* <TouchableOpacity style={styles.button} onPress={takePhoto}>
           <Text style={styles.text}>Photo</Text>

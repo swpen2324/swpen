@@ -13,6 +13,8 @@
     "@react-native-camera-roll/camera-roll": "^6.0.0",
     "react": "18.2.0",
     "react-native": "0.72.6",
+    "react-native-orientation-locker": "^1.5.0",
+    "react-native-video-processing": "^1.7.2",
     "react-native-vision-camera": "^3.5.1"
   },
   "devDependencies": {
